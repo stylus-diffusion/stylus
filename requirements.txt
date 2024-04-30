@@ -1,0 +1,17 @@
+beautifulsoup4
+clean-fid
+cohere
+datasets
+gdown
+google-generativeai
+omegaconf
+openai==1.12.0
+pandas
+pinecone
+python-dotenv
+seaborn
+tiktoken
+torch-fidelity
+torchmetrics
+vertexai
+sentence_transformers

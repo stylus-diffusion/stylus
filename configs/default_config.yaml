@@ -1,0 +1,68 @@
+# Configuration for retriever
+rank: 
+  # Select the top K adapters
+  top_k: 150
+  # 'rank' (select top K) or 'random'
+  policy: 'rank'
+  # 'openai', 'salesforce', 'clip'
+  embedding_type: 'openai'
+  # Use Pinecone DB to fetch top K adapters.
+  pinecone: False
+# Configuration for composer
+rerank:
+  # Max number of adapters per concept.
+  top_k: 3
+  # Can be 'composer' or 'cohere'
+  policy: 'composer'
+  # Max number of concepts to choose for a prompt.
+  num_concepts: -1
+  # Enable reranking or not.
+  enable: True
+  # For composer only: 'gemini' or 'gpt4'
+  rerank_model: 'openai'
+  # Blacklist character/celebrity LoRAs/adapters.
+  block_characters: True
+  # Enable multiturn conversations.
+  multiturn: True
+sd_config:
+  # Checkpoint types: ['realistic-vision', 'counterfeit', 'base']
+  checkpoint: 'realistic-vision'
+  # Ports for each stable diffusion replica.
+  ports: [7860]
+  # Run over multiple stable diffusion replicas.
+  parallel: True
+  # Number of images to generate.
+  batch_size: 2
+  # Overrides batch size. Number of images to generate PER mask. To disable, set < 0.
+  batch_size_per_mask: -1
+  # Grid search over different CFG values (for Pareto curve)
+  grid_cfg: []
+  # The standard SD configuration parameters.
+  steps: 35
+  cfg: 5
+  seed: -1
+  subseed: -1
+  subseed_strength: 0
+# Adapters can block other concepts in prompt from appearing. This flag emphasizes
+# concepts that are not related to any adapter.
+restore_concepts: False
+# Mask types:
+# - 'all' for using all adapters
+# - 'one_hot_loras' for one-hot encoding adapters for each concept (used by Stylus)
+# - 'one_hot_concept' for one-hot encoding for each concept
+mask: 'all'
+# Debias string steers image generation towards the original Checkpoint style.
+# Adapters can introduce foreign biases.
+debias_str: 'realistic, best quality'
+# Output directory for the generated images. Stored in '{output_dir}/cfg_{cfg}/{lora or normal}'
+output_dir: '~/autoadapter/output'
+# Path to API keys.
+keys_path: 'configs/keys.yaml'
+# For batch runs (batch_prompts.py), use this to etch the CSV for list of prompts.
+prompt_file: '~/autoadapter/datasets/coco_rank.csv'
+# For batch runs (batch_prompts.py), use this to fetch Stylus cached outputs in CSV.
+rank_cache: False
+# For batch runs (batch_prompts.py), randomly choose X prompts.
+randomize: -1
+# Dry run, skip generating images and only output Stylus's selected adapters.
+skip_generation: False

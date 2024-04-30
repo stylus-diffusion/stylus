@@ -1,0 +1,10 @@
+prompt_file: "~/stylus/datasets/coco_rank.csv"
+output_dir: "~/coco_output"
+debias_str: 'realistic, best quality'
+skip_generation: False
+mask: 'one_hot_loras'
+sd_config:
+  grid_cfg: [9, 1, 1.5, 2, 3, 4, 6, 12]
+  parallel: True
+  ports: [7860, 7861, 7862, 7863, 7864, 7865, 7866, 7867, 7868, 7869, 7870, 7871, 7872, 7873, 7874, 7875]
+  batch_size: 8

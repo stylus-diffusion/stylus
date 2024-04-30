@@ -1,0 +1,8 @@
+OPENAI_API_KEY: Null
+OPENAI_ORG_ID: Null
+OPENAI_PROJECT_ID: Null
+CIVIT_API_KEY: Null
+# Optional: To poll our Pinecone DB
+PINECONE_KEY: Null
+# Optional, for reranker ablation.
+COHERE_API_KEY: Null

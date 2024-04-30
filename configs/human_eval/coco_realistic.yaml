@@ -1,0 +1,11 @@
+prompt_file: "~/stylus/datasets/coco_rank.csv"
+output_dir: "~/coco_realistic_output"
+skip_generation: False
+debias_str: 'realistic, best quality'
+mask: 'one_hot_loras'
+sd_config:
+  batch_size: 8
+  cfg: 8
+  parallel: True
+  # 16 replicas of Stable Diffusion running in parallel.
+  ports: [7860, 7861, 7862, 7863, 7864, 7865, 7866, 7867, 7868, 7869, 7870, 7871, 7872, 7873, 7874, 7875]

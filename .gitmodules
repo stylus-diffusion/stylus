@@ -1,0 +1,6 @@
+[submodule "stable_diffusion"]
+	path = stable_diffusion
+	url = https://github.com/AUTOMATIC1111/stable-diffusion-webui.git
+[submodule "stylus/eval/clean-fid"]
+	path = stylus/eval/clean-fid
+	url = https://github.com/jwong8314/clean-fid.git

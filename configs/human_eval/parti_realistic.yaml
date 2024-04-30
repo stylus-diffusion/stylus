@@ -1,0 +1,10 @@
+prompt_file: "~/stylus/datasets/parti_prompts.csv"
+output_dir: "~/parti_realistic_output"
+skip_generation: False
+mask: 'one_hot_loras'
+sd_config:
+  batch_size: 8
+  cfg: 5
+  parallel: True
+  ports: [7860, 7861, 7862, 7863, 7864, 7865, 7866, 7867, 7868, 7869, 7870, 7871, 7872, 7873, 7874, 7875]
+debias_str: 'realistic, best quality'
