@@ -1,7 +1,7 @@
 # This python file samples COCO images from the VAL2014 dataset and saves it to a CSV file and moves the sampled images into
 # a specified directory.
 # Example Command:
-# python subsample_coco.py --captions_path=~/autoadapter/datasets/coco_rank.csv --outdir ~/coco/coco_rank --reference_img ~/coco/val2014 --downsample 10000
+# python subsample_coco.py --captions_path=~/stylus/datasets/coco_rank.csv --outdir ~/coco/coco_rank --reference_img ~/coco/val2014 --downsample 10000
 import argparse
 from pathlib import Path
 import shutil

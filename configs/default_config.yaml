@@ -55,11 +55,11 @@ mask: 'all'
 # Adapters can introduce foreign biases.
 debias_str: 'realistic, best quality'
 # Output directory for the generated images. Stored in '{output_dir}/cfg_{cfg}/{lora or normal}'
-output_dir: '~/autoadapter/output'
+output_dir: '~/stylus/output'
 # Path to API keys.
 keys_path: 'configs/keys.yaml'
 # For batch runs (batch_prompts.py), use this to etch the CSV for list of prompts.
-prompt_file: '~/autoadapter/datasets/coco_rank.csv'
+prompt_file: '~/stylus/datasets/coco_rank.csv'
 # For batch runs (batch_prompts.py), use this to fetch Stylus cached outputs in CSV.
 rank_cache: False
 # For batch runs (batch_prompts.py), randomly choose X prompts.

@@ -18,8 +18,8 @@ Stylus automatically retrieves and composes relevant adapters based on prompts' 
 
 We recommend using Python version `>=3.10`. To install Stylus, run:
 ```
-git clone --recursive https://github.com/michaelzhiluo/autoadapter.git
-cd autoadapter
+git clone --recursive https://github.com/stylus-diffusion/stylus.git
+cd stylus
 pip install -r requirements.txt
 pip install -e .
 ```
