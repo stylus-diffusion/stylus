@@ -24,6 +24,10 @@ def fetch_civit_model_catalog(file_path: str = CATALOG_FILE_PATH) -> list:
     if os.path.exists(file_path):
         with open(file_path, 'r') as file:
             return json.load(file)
+            
+    cache_dir_path = os.path.join(os.path.dirname(cur_file_path), "cache")
+    if not os.path.exists(cache_dir_path):
+        os.makedirs(cache_dir_path)
 
     print('Downloading Civit AI Model Catalog...')
     request_url = f'{CIVIT_AI_URL}?{"&".join(CIVIT_AI_FILTERS)}'
