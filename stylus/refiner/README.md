@@ -6,7 +6,7 @@ This tutorial assumes that the user has created an account on Civit AI and has g
 
 The first step is to fetch all of Civit AI's models via Civit's Rest API. This is saved in `stylus/cache/civit_catalog.json`. Run:
 ```
-python fetch_catalog.py.
+python fetch_catalog.py
 ```
 
 This should take 1-2 hours to complete. If not, the API server is congested.
