@@ -166,7 +166,7 @@ def generate_adapters_catalog(adapters: List[AdapterInfo]):
         if adapter.llm_description:
             adapter_description = adapter.llm_description
         else:
-            adapter.description = adapter.description[:1000] if adapter.description else 'None'
+            adapter_description = adapter.description[:1000] if adapter.description else 'None'
         
         adapter_catalog_str += ADAPTER_CATALOG.format(adapter_idx=idx,
                                                         adapter_title=adapter.title,
