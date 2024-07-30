@@ -21,10 +21,14 @@ python fetch_adapter_metadata.py
 
 ## 3. Added VLM descriptions to Adapter Metadata
 
-The refiner employs a VLM (Gemini-1.5) to improve the descriptions and documentations for each adapter. Our code assumes that the user has a GCP (Google Cloud) account setup.
+The refiner employs a VLM (Gemini-1.5 or GPT-4o) to improve the descriptions and documentations for each adapter. Our code assumes that the user has a GCP (Google Cloud) or OpenAI account setup.
 The descriptions of each adapter is saved in `stylus/cache/ultra_model/[MODEL_ID]`, where `MODEL_ID` is the Civit AI model ID. Run:
 ```
-python vlm.py
+# for gemini
+python vlm.py --vlm gemini
+
+# for openai
+python vlm.py --vlm openai
 ```
 We recommend running this several times to ensure that most adapters have VLM descriptions. The length of this may take hours to weeks, depending on the user's GCP quota for Gemini.
 
