@@ -17,6 +17,11 @@ import vertexai
 
 from stylus.refiner.fetch_adapter_metadata import ADAPTERS_FILE, AdapterInfo, fetch_adapter_metadata
 
+from openai import OpenAI
+import base64
+import argparse
+
+
 # Constants
 CACHE_RES_DIR = "cache/ultra_model"
 HARM_CATEGORIES = [
@@ -38,7 +43,7 @@ Your goal is to improve the description of a model adapter for Stable Diffusion,
 - Some prompts may specify the adapter weight, in the form of <lora:[NAME]:[WEIGHT]>, and the associated trigger words. You will need to infer the adapter NAME and WEIGHT from the prompt. If a weight is found, override the model card weight recommendation.
 - Isolate the effects of the model adapter on the image apart from other text in the prompt.
 
-Your goal is to provide a better, more concise, description of the model adapter and its impact on the image. You should implicitly categorize the model adapters into only one of the following topics: Concept, Style, Pose, Action, Celebrity/character, Clothing, Background, Building, Vehicle, Animal, Action. Do not identify an adapter with an associated topic that is vague, generic, or uninteresting. 
+Your goal is to provide a better, more concise, description of the model adapter and its impact on the image. You should implicitly categorize the model adapters into only one of the following topics: Concept, Style, Pose, Action, Celebrity/character, Clothing, Background, Building, Vehicle, Animal, Action. Do not identify an adapter with an associated topic that is vague, generic, or uninteresting.
 
 First, describe the main topic that the adapter introduces and how this adapter modifies the commonalities between all provided images. Your requirements are:
 - Do not go over 1000 tokens.
@@ -103,7 +108,7 @@ def parse_model_output(input_string: str) -> Tuple[str, float]:
     return description, weight
 
 
-def load_image_from_url(image_url: str) -> Optional[VertexImage]:
+def load_image_from_url_gemini(image_url: str) -> Optional[VertexImage]:
     """Load an image from a URL and return it as a VertexImage object."""
     try:
         req = urllib.request.Request(image_url,
@@ -125,7 +130,29 @@ def load_image_from_url(image_url: str) -> Optional[VertexImage]:
         return None
 
 
-def poll_model_with_backoff(prompt_list: List[str],
+
+def load_image_from_url_openai(image_url: str) -> str:
+    """Load an image from a URL and return it as a VertexImage object."""
+    try:
+        req = urllib.request.Request(image_url,
+                                     headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            # Check if the content type is an image
+            if 'image' not in response.headers['Content-Type']:
+                return None
+            image_bytes = response.read()
+            # Try to open the image with PIL to verify it's valid
+            try:
+                pil_image = PIL_Image.open(io.BytesIO(image_bytes))
+                pil_image.verify()  # Verify that it is an image
+            except PIL_Image.UnidentifiedImageError:
+                return None
+            return base64.b64encode(image_bytes).decode("utf-8")
+    except Exception as e:
+        print(f"Failed to download or validate image from {image_url}: {e}")
+
+
+def poll_model_with_backoff_gemini(prompt_list: List[str],
                             model,
                             max_attempts=1e9,
                             safety_settings=None):
@@ -146,6 +173,37 @@ def poll_model_with_backoff(prompt_list: List[str],
                 return None
             time.sleep(backoff_time)
             backoff_time = min(backoff_time * 2, 64)
+
+
+def poll_model_with_backoff_openai(prompt_list: List[str],
+                            model,
+                            client,
+                            max_attempts=1e9):
+    """Attempt to fetch model response with exponential backoff."""
+    backoff_time = 1
+    counter = 0
+    while True:
+        try:
+            model_response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": prompt_list}
+                ],
+                temperature=0.0,
+            )
+            return model_response
+
+        except Exception as e:
+            print(f"Error during model generation: {e}")
+            import traceback
+            print(traceback.print_exc())
+            counter += 1
+            if counter >= max_attempts:
+                return None
+            time.sleep(backoff_time)
+            backoff_time = min(backoff_time * 2, 64)
+
 
 
 # NOTE: Stylus Docs uses `gemini-1.0-ultra-vision`, an outdated model.
@@ -183,7 +241,7 @@ class GeminiVLM:
         for image_url, image_prompt in image_data:
             if counter >= max_images:
                 break
-            image = load_image_from_url(image_url)
+            image = load_image_from_url_gemini(image_url)
             if not image:
                 continue
             # Add the successfully loaded image and its prompt to the list
@@ -224,7 +282,7 @@ class GeminiVLM:
                 break
 
             try:
-                model_response = poll_model_with_backoff(
+                model_response = poll_model_with_backoff_gemini(
                     prompt_list,
                     self.model,
                     safety_settings=self.safety_settings)
@@ -249,9 +307,109 @@ class GeminiVLM:
             break
 
 
-# TODO(mluo): Support more VLMs (i.e. GPT-4V).
+class OpenAIVLM:
+    """A class representing the OpenAI VLM."""
+
+    def __init__(self, model='gpt-4o'):
+        self.model = model
+        self.client = OpenAI()
+        self.retry_attempts = 2
+
+    def assemble_vlm_prompt(self, adapter: AdapterInfo, max_images=10):
+        # Put the static VLM prompt at the first
+        prompt_list =[{"type": "text", "text": VLM_PROMPT}]
+        prompt_list += [{
+            "type": "text",
+            "text":
+            f"Title: {adapter.title}; "
+            f"Tags: {adapter.tags}; "
+            f"Trigger Words: {adapter.trigger_words}; "
+            f"Description: {adapter.description}"
+        }]
+
+        # Ensuring the lengths of image related lists are consistent
+        if not (len(adapter.image_urls) == len(adapter.image_prompts) == len(
+                adapter.image_negative_prompts)):
+            raise ValueError(
+                "Image URLs, prompts, and negative prompts must be the same length."
+            )
+
+        # Processing images and their corresponding prompts
+        image_data = zip(adapter.image_urls, adapter.image_prompts)
+        counter = 0
+        for image_url, image_prompt in image_data:
+            if counter >= max_images:
+                break
+
+            _, image_ext = os.path.splitext(image_url)
+            image_ext = image_ext[1:].strip()
+            image = load_image_from_url_openai(image_url)
+
+            # check valid image format for openai api
+            if image_ext not in ['png', 'jpg', 'jpeg', 'gif', 'webp']:
+                continue
+
+            if not image:
+                continue
+
+            # Add the successfully loaded image and its prompt to the list
+            # Exclude negative prompts as this can confused the VLM.
+            prompt_list += [{"type": "image_url", "image_url": {"url": f"data:image/{image_ext};base64,{image}"}}]
+            prompt_list += [{"type": "text", "text": 'Prompt: ' + image_prompt.replace("\n", "")}]
+            counter += 1
+
+        return prompt_list
+
+    def generate(self, adapter: AdapterInfo, max_images=10):
+        """
+        Generates the VLM description for the given adapter and caches the result.
+
+        Args:
+            adapter (AdapterInfo): The adapter information containing the metadata for VLM generation.
+            max_images (int): The maximum number of images to consider for generating the description.
+
+        Returns:
+            None: Results are printed and cached directly within the function.
+        """
+        adapter_id = adapter.adapter_id
+        if check_cache(adapter_id):
+            # If the VLM output is already cached, return nothing.
+            return
+
+        prompt_list = self.assemble_vlm_prompt(adapter, max_images)
+        counter = 0
+        while True:
+            if counter > self.retry_attempts:
+                print("=" * 9)
+                print(f'{adapter.title} ;; {adapter.alias}')
+                print("Failed to compute VLM description.")
+                print("=" * 9)
+                write_cache(adapter_id, 'Failed')
+                break
+
+            try:
+                model_response = poll_model_with_backoff_openai(
+                    prompt_list,
+                    self.model,
+                    self.client)
+                model_response_text = model_response.choices[0].message.content
+                # If model errored (such as safety filters triggered), this will create an error (as text does not exist).
+                description, weight = parse_model_output(model_response_text)
+            except (IndexError, Exception):
+                counter += 1
+                continue
+
+            print("=" * 9)
+            print(f'{adapter.title} ;; {adapter.alias}')
+            print(f'Description: {description} ;; Weight: {weight}')
+            print("=" * 9)
+            write_cache(adapter_id, model_response_text)
+            break
+
+
 SUPPORTED_VLM_MODELS = {
     'gemini': GeminiVLM,
+    'openai': OpenAIVLM,
 }
 
 
@@ -325,10 +483,17 @@ def move_vlm_description(adapters: List[AdapterInfo]):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Run VLM Model.')
+    parser.add_argument('--vlm', type=str, help='VLM Model Name (gemini or openai)', default='gemini')
+    args = parser.parse_args()
+
     adapter_list = fetch_adapter_metadata(base_model='SD 1.5',
                                           adapter_type='LORA')
+
+
     # Depending on user's quota, this might take days or weeks to complete.
-    compute_vlm_description(adapter_list)
+    compute_vlm_description(adapter_list, describe_model=args.vlm)
+
     # Take the cached VLM descriptions and save them into AdapterInfo.llm_description.
     # This completes StylusDocs.
     move_vlm_description(adapter_list)
