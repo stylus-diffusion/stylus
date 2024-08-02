@@ -93,7 +93,7 @@ Another example, for the prompt "a black t-shirt with the peace sign on it", the
 }}
 """
 
-MULTITURN_PROMPT = 'Refine your answer to fit the json output format. However, make sure that the adapter perfectly fits the topic and the prompt. REMOVE ADAPTERS THAT ARE "SIMILAR" TO THEIR TOPIC OR COULD INDIRECTLY IMPACT A TOPIC OR COULD INCLUDE THE OBJECT. THE ADAPTER MUST BE DIRECTLY RELATED TO THE TOPIC. Also, Remove adapters that cover a broader topic than its assigned topic. Absolutely make sures that the adapters follow the rules above. Remove all character/celebrity LORAs if there is no celebrity or character in the prompt. Make sure that each adapter is provided AT MOST ONCE across topics and only 0-{top_k} adapters per topic. If an adapter covers multiple topics, group the topics together. Do not hallucinate. Provide only the answer in the output format below:'
+MULTITURN_PROMPT = 'Refine your answer to fit the json output format. However, make sure that the adapter closely fits the topic and the prompt. REMOVE ADAPTERS THAT ARE "SIMILAR" TO THEIR TOPIC OR COULD INDIRECTLY IMPACT A TOPIC OR COULD INCLUDE THE OBJECT. THE ADAPTER MUST BE DIRECTLY RELATED TO THE TOPIC. Also, Remove adapters that cover a broader topic than its assigned topic. Absolutely make sures that the adapters follow the rules above. Remove all character/celebrity LORAs if there is no celebrity or character in the prompt. Make sure that each adapter is provided AT MOST ONCE across topics and only 0-{top_k} adapters per topic. If an adapter covers multiple topics, group the topics together. Do not hallucinate. Provide only the answer in the output format below:'
 
 class Composer:
     def __init__(self, model: str):
@@ -104,7 +104,7 @@ class Composer:
         
         
 class GeminiComposer(Composer):
-    def __init__(self, model: str = 'gemini-1.5-pro-preview-0409'):
+    def __init__(self, model: str = 'gemini-1.5-pro-001'):
         super().__init__(model)
         vertexai.init()
         self.gemini_model = GenerativeModel(self.model)
@@ -195,13 +195,11 @@ def compose(prompt: str,
                                           limit_concepts_str=limit_concepts_str,
                                           top_k=top_k)
     refine_prompt = MULTITURN_PROMPT.format(top_k=top_k)
-    
+
     if rerank_model == 'gemini':
         composer_model = GeminiComposer()
     elif rerank_model == 'openai':
         composer_model = OpenAIComposer()
-    
-        
     response_str = composer_model.forward(composer_prompt)
     if enable_multiturn:
         response_str = composer_model.forward(refine_prompt)

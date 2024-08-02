@@ -130,7 +130,6 @@ def load_image_from_url_gemini(image_url: str) -> Optional[VertexImage]:
         return None
 
 
-
 def load_image_from_url_openai(image_url: str) -> str:
     """Load an image from a URL and return it as a VertexImage object."""
     try:
@@ -141,6 +140,10 @@ def load_image_from_url_openai(image_url: str) -> str:
             if 'image' not in response.headers['Content-Type']:
                 return None
             image_bytes = response.read()
+            
+            if len(image_bytes) >= 2 * 1024 * 1024:
+                print(f"Image size is too large: {len(image_bytes)} bytes")
+                return None
             # Try to open the image with PIL to verify it's valid
             try:
                 pil_image = PIL_Image.open(io.BytesIO(image_bytes))
@@ -193,7 +196,6 @@ def poll_model_with_backoff_openai(prompt_list: List[str],
                 temperature=0.0,
             )
             return model_response
-
         except Exception as e:
             print(f"Error during model generation: {e}")
             import traceback
@@ -218,7 +220,7 @@ class GeminiVLM:
             SafetySetting(category=h, threshold=HarmBlockThreshold.BLOCK_NONE)
             for h in HARM_CATEGORIES
         ]
-        self.retry_attempts = 2
+        self.retry_attempts = 3
 
     def assemble_vlm_prompt(self, adapter: AdapterInfo, max_images=10):
         prompt_list = [
@@ -315,9 +317,9 @@ class OpenAIVLM:
         self.client = OpenAI()
         self.retry_attempts = 2
 
-    def assemble_vlm_prompt(self, adapter: AdapterInfo, max_images=10):
+    def assemble_vlm_prompt(self, adapter: AdapterInfo, max_images=7):
         # Put the static VLM prompt at the first
-        prompt_list =[{"type": "text", "text": VLM_PROMPT}]
+        prompt_list =[]
         prompt_list += [{
             "type": "text",
             "text":
@@ -348,7 +350,8 @@ class OpenAIVLM:
             # check valid image format for openai api
             if image_ext not in ['png', 'jpg', 'jpeg', 'gif', 'webp']:
                 continue
-
+            if image_ext == 'jpg':
+                image_ext == 'jpeg'
             if not image:
                 continue
 
@@ -357,7 +360,7 @@ class OpenAIVLM:
             prompt_list += [{"type": "image_url", "image_url": {"url": f"data:image/{image_ext};base64,{image}"}}]
             prompt_list += [{"type": "text", "text": 'Prompt: ' + image_prompt.replace("\n", "")}]
             counter += 1
-
+        prompt_list.append({"type": "text", "text": VLM_PROMPT})
         return prompt_list
 
     def generate(self, adapter: AdapterInfo, max_images=10):
@@ -374,8 +377,8 @@ class OpenAIVLM:
         adapter_id = adapter.adapter_id
         if check_cache(adapter_id):
             # If the VLM output is already cached, return nothing.
+            print("Cached")
             return
-
         prompt_list = self.assemble_vlm_prompt(adapter, max_images)
         counter = 0
         while True:
@@ -425,7 +428,7 @@ def compute_vlm_description(adapters: List[AdapterInfo],
 
     # This throughput for VLM description is bounded by GCP quota for Gemini models.
     # See: https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=64) as executor:
         # Schedule the processing of each adapter to be executed in parallel
         future_to_adapter = {
             executor.submit(_process_vlm, adapter, describe_model): adapter
@@ -489,7 +492,6 @@ if __name__ == '__main__':
 
     adapter_list = fetch_adapter_metadata(base_model='SD 1.5',
                                           adapter_type='LORA')
-
 
     # Depending on user's quota, this might take days or weeks to complete.
     compute_vlm_description(adapter_list, describe_model=args.vlm)
