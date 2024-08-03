@@ -1,0 +1,12 @@
+prompt_file: "~/stylus/datasets/coco_rank.csv"
+output_dir: "~/coco_4o"
+debias_str: 'realistic, best quality, 8k resolution'
+skip_generation: False
+mask: 'one_hot_loras'
+sd_config:
+  cfg: 6
+  parallel: True
+  ports: [7860, 7861, 7862, 7863, 7864, 7865, 7866, 7867]
+  batch_size_per_mask: 2
+rerank:
+  rerank_model: 'gemini'

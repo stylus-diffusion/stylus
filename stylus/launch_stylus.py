@@ -160,6 +160,7 @@ def run_stylus(prompt: str,
         counter = 0
         for b_size, mask in zip(mask_batch_sizes, final_masks):
             prompt = prompt.lower()
+            b_size = 2
             print(prompt)
             generate_from_prompt(prompt,
                                 args.sd_config,
@@ -168,4 +169,5 @@ def run_stylus(prompt: str,
                                 ignore_cache= counter > 0,
                                 batch_size=b_size,)
             counter+=1
+            break
     return final_loras
