@@ -3,8 +3,10 @@
 <p align="center">
   <a href="https://stylus-diffusion.github.io/"><img src="https://img.shields.io/badge/🌐-Website-red" height="25"></a>
   <a href="https://arxiv.org/abs/2404.18928"><img src="https://img.shields.io/badge/📝-Paper-blue" height="25"></a>
-  <a href="https://drive.google.com/file/d/1iMYQWHraC1JT78-MYOapvGNIuLoTMO-x/view?usp=sharing" ><img src="https://img.shields.io/badge/💡-StylusDocs-green" height="25"></a>
+  <a href="[https://drive.google.com/file/d/1iMYQWHraC1JT78-MYOapvGNIuLoTMO-x/view?usp=sharing](https://drive.google.com/file/d/1qFEoDWp3BSwyIlkaSrEoRCmMNGogMyVn/view?usp=sharing)" ><img src="https://img.shields.io/badge/💡-StylusDocs-green" height="25"></a>
 </p>
+
+**Update: We have uploaded [StylusDocsv2](https://drive.google.com/file/d/1qFEoDWp3BSwyIlkaSrEoRCmMNGogMyVn/view?usp=sharing), with better adapter descriptions from GPT-4o.**
 
 ## 🌎 Overview
 
