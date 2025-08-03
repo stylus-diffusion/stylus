@@ -56,11 +56,11 @@ def set_env_keys(cfg):
     
     # COHERE
     if keys_cfg.COHERE_API_KEY is not None:
-        if os.getenv("COHERE_API_KEY") != keys_cfg.COHERE_KEY:
+        if os.getenv("COHERE_API_KEY") != keys_cfg.COHERE_API_KEY:
             print(
-                f"Warning: COHERE_API_KEY is set in keys.yaml conflicts with environment variable. Overwriting environment variable.\nENV:{os.getenv('COHERE_API_KEY')}\nkeys.yaml:{keys_cfg.COHERE_KEY}"
+                f"Warning: COHERE_API_KEY is set in keys.yaml conflicts with environment variable. Overwriting environment variable.\nENV:{os.getenv('COHERE_API_KEY')}\nkeys.yaml:{keys_cfg.COHERE_API_KEY}"
             )
-            os.environ["COHERE_API_KEY"] = keys_cfg.COHERE_KEY
+            os.environ["COHERE_API_KEY"] = keys_cfg.COHERE_API_KEY
     else:
         if os.getenv("COHERE_API_KEY") is None:
             print(
